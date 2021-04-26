@@ -4,11 +4,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
-	"tls-dns-proxy/pkg/domain/proxy"
-
-	"golang.org/x/net/dns/dnsmessage"
+	"time"
+	"dns-proxy/pkg/domain/proxy"
 )
 
 const cflRootCert = `-----BEGIN CERTIFICATE-----
@@ -39,13 +39,14 @@ CzqJx1+NLyc8nAK8Ib2HxnC+IrrWzfRLvVNve8KaN9EtBH7TuMwNW4SpDCmGr6fY
 `
 
 type cloudFlare struct {
-	ip       string
-	port     int
-	rootCert string
+	ip          string
+	port        int
+	rootCert    string
+	readTimeOut uint
 }
 
-func NewCloudFlareResolver(ip string, port int) proxy.Resolver {
-	return &cloudFlare{ip, port, cflRootCert}
+func NewCloudFlareResolver(ip string, port int, rto uint) proxy.Resolver {
+	return &cloudFlare{ip, port, cflRootCert, rto}
 }
 
 func (cfl *cloudFlare) GetTLSConnection() (*tls.Conn, error) {
@@ -61,25 +62,27 @@ func (cfl *cloudFlare) GetTLSConnection() (*tls.Conn, error) {
 		log.Println("Error connecting to CloudFlare")
 		return nil, err
 	}
+	_ = dnsCloudFlareConn.SetReadDeadline(time.Now().Add(time.Duration(cfl.readTimeOut) * time.Millisecond))
 	return dnsCloudFlareConn, nil
 }
 
-func (cfl *cloudFlare) Solve(dnsm dnsmessage.Message) error {
-	var b []byte
-	b, uerr := dnsm.Pack()
-	if uerr != nil {
-		log.Println(uerr.Error())
-		return errors.New("Could not unpack DNS Message.")
-	}
+func (cfl *cloudFlare) Solve(um proxy.UnsolvedMsg) (proxy.SolvedMsg, error) {
+	// Levanto una conexión con CF
 	conn, err := cfl.GetTLSConnection()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer conn.Close()
-	n, rerr := conn.Write(b)
-	if rerr != nil {
-		log.Println("Error on cloudFlare response")
+	_, e := conn.Write(um)
+	if e != nil {
+		fmt.Printf("%v", e)
 	}
-	dnsm.Unpack(b[:n])
-	return nil
+	var reply [2045]byte
+	n, er := conn.Read(reply[:])
+	if er != nil {
+		fmt.Printf("Could read response from CloudFlare: %v \n", er)
+	} else {
+		log.Println("Succesfuly fullfiled the request")
+	}
+	return reply[:n], nil
 }

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"tls-dns-proxy/pkg/domain/proxy"
+	"dns-proxy/pkg/domain/proxy"
 
 	"golang.org/x/net/dns/dnsmessage"
 )
@@ -21,6 +21,10 @@ func NewMemoryCache(ttl time.Time) proxy.Cache {
 	return &memCache{ttl}
 }
 
-func (c *memCache) Solve(dnsm dnsmessage.Message) error {
-	return errors.New("Not found")
+func (mc *memCache) Get(dnsm *dnsmessage.Message) (proxy.SolvedMsg, error) {
+	return nil, errors.New("Not implemented")
+}
+
+func (mc *memCache) Store(dnsm *dnsmessage.Message, sm proxy.SolvedMsg) error {
+	return errors.New("Not implemented")
 }

@@ -5,16 +5,18 @@ import (
 	"dns-proxy/pkg/domain/proxy"
 	"dns-proxy/pkg/gateway/cache"
 	"dns-proxy/pkg/gateway/resolver"
+	"dns-proxy/pkg/helpers"
 	"dns-proxy/pkg/presenter/socket"
 )
 
 func main() {
+	config := GetConfig()
+	cache := cache.NewMemoryCache(time.Now().Add(time.Duration(config.CACHE_TLL) * time.Second))
+	resolver := resolver.NewCloudFlareResolver("1.1.1.1", 853, config.RESOLVER_READ_TO)
+	parser := helpers.NewMsgParser()
 
-	cache := cache.NewMemoryCache(time.Now().Add(5 * time.Second))
+	proxy := proxy.NewDNSProxy(resolver, parser, cache)
 
-	resolver := resolver.NewCloudFlareResolver("1.1.1.1", 853)
-
-	proxy := proxy.NewDNSProxy(resolver, cache)
-
-	socket.StartTCPServer(proxy, 4545, "localhost")
+	go socket.StarUDPtServer(proxy, config.UDP_PORT, "0.0.0.0")
+	socket.StartTCPServer(proxy, config.TCP_PORT, "0.0.0.0", config.TCP_DIRECT, config.TCP_MAX_CONN_POOL)
 }
