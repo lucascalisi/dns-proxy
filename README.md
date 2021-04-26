@@ -33,8 +33,8 @@ go run main.go config.go # no need to build
 
 ## 🐋 Build and Run with Docker
 ```sh
-docker image build -t dns-tls-proxy .
-docker container run --rm --env-file .env -p 4545:4545/tcp -p 4545:4545/udp proxy-dns
+docker image build -t dns-proxy .
+docker container run --rm --env-file .env -p 4545:4545/tcp -p 4545:4545/udp dns-proxy
 ```
 
 ## Usage

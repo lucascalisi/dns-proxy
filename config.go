@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
 	"os"
 	"strconv"
 )
@@ -25,24 +26,34 @@ func GetConfig() config {
 
 	cacheTTL, err := strconv.Atoi(os.Getenv(CACHE_TTL))
 	if err != nil {
-		panic("Config Err: Could not parse Cache TTL")
+        fmt.Printf("Config Err: Could not parse Cache TTL: %v", err)
+        os.Exit(-1)
 	}
+
 	tcpPort, err := strconv.Atoi(os.Getenv(TCP_PORT))
 	if err != nil {
-		panic("Config Err: Could not parse TCP port")
+        fmt.Printf("Config Err: Could not parse TCP port: %v \n", err)
+        os.Exit(-1)
 	}
+
 	udpPort, err := strconv.Atoi(os.Getenv(UDP_PORT))
 	if err != nil {
-		panic("Config Err: Could not parse UDP port")
+        fmt.Printf("Config Err: Could not parse UDP port: %v\n", err)
+        os.Exit(-1)
 	}
+
 	maxConnPool, err := strconv.Atoi(os.Getenv(TCP_MAX_CONN_POOL))
 	if err != nil {
-		panic("Config Err: Could not parse TCP_MAX_CONN_POOL.")
+        fmt.Printf("Config Err: Could not parse TCP_MAX_CONN_POOL.: %v\n ", err)
+        os.Exit(-1)
 	}
+
 	resolverReadTO, err := strconv.Atoi(os.Getenv(RESOLVER_READ_TO))
 	if err != nil {
-		panic("Config Err: Could not parse RESOLVER_READ_TO.")
+        fmt.Printf("Config Err: Could not parse RESOLVER_READ_TO.: %v\n", err)
+        os.Exit(-1)
 	}
+
 	tcpProxyMehod := os.Getenv(PROXY_METHOD_PORT)
 	directTCPPRoxy := false
 	if tcpProxyMehod == "direct" {
