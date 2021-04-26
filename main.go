@@ -1,28 +1,28 @@
 package main
 
 import (
-	"time"
 	"dns-proxy/pkg/domain/proxy"
 	"dns-proxy/pkg/gateway/cache"
 	"dns-proxy/pkg/gateway/resolver"
 	"dns-proxy/pkg/helpers"
 	"dns-proxy/pkg/presenter/socket"
+	"log"
+	"time"
+
 	"github.com/sevlyar/go-daemon"
-    "log"
 )
 
 func main() {
-     cntxt := goDaemon("/tmp/dns-proxy.pid", "/tmp", "/tmp/dns-proxy.log", []string{"dns-proxy"})
-     d, err := cntxt.Reborn()
-     if err != nil {
-         log.Fatal("Unable to run: ", err)
-     }
+	cntxt := goDaemon("/tmp/dns-proxy.pid", "/tmp", "/tmp/dns-proxy.log", []string{"dns-proxy"})
+	d, err := cntxt.Reborn()
+	if err != nil {
+		log.Fatal("Unable to run: ", err)
+	}
 
-     if d != nil {
-         return
-     }
-     defer cntxt.Release()
-
+	if d != nil {
+		return
+	}
+	defer cntxt.Release()
 	config := GetConfig()
 	cache := cache.NewMemoryCache(time.Now().Add(time.Duration(config.CACHE_TLL) * time.Second))
 	resolver := resolver.NewCloudFlareResolver("1.1.1.1", 853, config.RESOLVER_READ_TO)
