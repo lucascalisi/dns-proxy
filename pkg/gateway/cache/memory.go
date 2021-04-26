@@ -2,7 +2,7 @@ package cache
 
 import (
 	"errors"
-	"fmt"
+	"log"
 	"time"
 	"dns-proxy/pkg/domain/proxy"
 
@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	fmt.Println("vim-go")
+	log.Println("vim-go")
 }
 
 type memCache struct {

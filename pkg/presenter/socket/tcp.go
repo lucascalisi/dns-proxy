@@ -2,7 +2,6 @@ package socket
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -12,7 +11,7 @@ import (
 
 func StartTCPServer(proxy proxy.Service, port int, host string, direct bool, maxPoolConnection int) {
 	portStr := strconv.Itoa(port)
-	fmt.Println("Listening TCP DNS Proxy on PORT " + portStr)
+	log.Println("Listening TCP DNS Proxy on PORT " + portStr)
 	ln, err := net.Listen("tcp", host+":"+portStr)
 	if err != nil {
 		log.Println("Error creating listener")
@@ -50,7 +49,7 @@ func tcpHandler(conn *net.Conn, p proxy.Service, conns *uint64, direct bool) err
 		}
 		solvedMsg, proxyErr := p.Solve(unsolvedMsg[:n], "tcp")
 		if proxyErr != nil {
-			fmt.Printf("Error solving message: %v \n", proxyErr)
+			log.Printf("Error solving message: %v \n", proxyErr)
 		}
 		(*conn).Write(solvedMsg)
 	}

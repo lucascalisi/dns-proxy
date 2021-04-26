@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -11,7 +10,7 @@ import (
 
 func StarUDPtServer(proxy proxy.Service, port int, host string) {
 	portStr := strconv.Itoa(port)
-	fmt.Println("Listening UDP DNS Proxy on PORT " + portStr)
+	log.Println("Listening UDP DNS Proxy on PORT " + portStr)
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{Port: port})
 	if err != nil {
 		log.Fatal(err)
@@ -30,12 +29,12 @@ func udpHandler(conn *net.UDPConn, p proxy.Service) {
 
 		solvedMsg, proxyErr := p.Solve(unsolvedMsg[:n], "udp")
 		if proxyErr != nil {
-			fmt.Printf("Error solving message: %v \n", proxyErr)
+			log.Printf("Error solving message: %v \n", proxyErr)
 		}
 
 		_, err = conn.WriteToUDP(solvedMsg[2:], addr)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	}
 }

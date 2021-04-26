@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -75,12 +74,12 @@ func (cfl *cloudFlare) Solve(um proxy.UnsolvedMsg) (proxy.SolvedMsg, error) {
 	defer conn.Close()
 	_, e := conn.Write(um)
 	if e != nil {
-		fmt.Printf("%v", e)
+		log.Printf("%v", e)
 	}
 	var reply [2045]byte
 	n, er := conn.Read(reply[:])
 	if er != nil {
-		fmt.Printf("Could read response from CloudFlare: %v \n", er)
+		log.Printf("Could read response from CloudFlare: %v \n", er)
 	} else {
 		log.Println("Succesfuly fullfiled the request")
 	}
