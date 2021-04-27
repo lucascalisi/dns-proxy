@@ -39,8 +39,8 @@ docker container run --rm --env-file .env -p 4545:4545/tcp -p 4545:4545/udp dns-
 
 ## Usage
 ```sh
-dig lucascontre.site  @127.0.0.1 -p 4545 # UDP
-dig lucascontre.site  @127.0.0.1 -p 4545 +tcp # TCP
+dig google.com  @127.0.0.1 -p 4545 # UDP
+dig google.com  @127.0.0.1 -p 4545 +tcp # TCP
 ```
 
 # Resources 
