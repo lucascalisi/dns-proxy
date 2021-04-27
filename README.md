@@ -11,15 +11,16 @@ Configuration parameters are set in a single file, weather you are running on yo
 
 ```sh
 # .env file
-PROXY_CONFIG_UDP_PORT=4545 # Port in which the proxy will listen to incomming UDP connections.
-PROXY_CONFIG_TCP_PORT=4545 # Port in which the proxy will listen to incomming TCP connections. 
-PROXY_CONFIG_METHOD=direct # (Optional) ('direct' for direct method or leave it blank for normal method)
-PROXY_CONFIG_TCP_MAX_CONN_POOL=15 # Max TCP pool connections allowed
-PROXY_CONFIG_CACHE_TTL=45 # The time the cache will hold a response in seconds. (Note: Cache is not implemented)
-PROXY_RESOLVER_READ_TO=500 # Read timeout of the DoT resolver TLS connection in miliseconds.
+PROXY_CONFIG_UDP_PORT=8853
+PROXY_CONFIG_TCP_PORT=8853
+PROXY_CONFIG_METHOD=
+PROXY_CONFIG_TCP_MAX_CONN_POOL=15
+PROXY_CONFIG_CACHE_TTL=45
+PROXY_RESOLVER_READ_TO=500
 ```
 ## 💻 Build and Run on Host 
 
+### This run on background. The process name is `dns-proxy`
 ```sh
 go build -o dns-proxy
 source <(cat .env | awk '{print "export "$1}')
@@ -34,13 +35,13 @@ go run main.go config.go # no need to build
 ## 🐋 Build and Run with Docker
 ```sh
 docker image build -t dns-proxy .
-docker container run --rm --env-file .env -p 4545:4545/tcp -p 4545:4545/udp dns-proxy
+docker container run --rm -it --env-file .env -p 8853:8853/tcp -p 8853:8853/udp dns-proxy
 ```
 
 ## Usage
 ```sh
-dig google.com  @127.0.0.1 -p 4545 # UDP
-dig google.com  @127.0.0.1 -p 4545 +tcp # TCP
+dig google.com  @127.0.0.1 -p 8853 # UDP
+dig google.com  @127.0.0.1 -p 8853 +tcp # TCP
 ```
 
 # Resources 
