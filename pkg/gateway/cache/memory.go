@@ -32,6 +32,8 @@ func (mc *memCache) Get(dnsm *dnsmessage.Message) (*dnsmessage.Message, error) {
 
 	result := mc.entries[AsSha256(dnsm.Questions)]
 	if result.present && time.Now().Sub(result.time) < mc.ttl {
+		result.msg.Header.ID = dnsm.Header.ID
+		dnsm.Header = result.msg.Header
 		dnsm.Answers = result.msg.Answers
 		dnsm.Authorities = result.msg.Authorities
 		dnsm.Additionals = result.msg.Additionals

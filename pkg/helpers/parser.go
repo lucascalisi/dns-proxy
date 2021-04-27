@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"bytes"
 	"dns-proxy/pkg/domain/proxy"
 	"errors"
 	"log"
@@ -48,13 +49,17 @@ func (mp *msgParser) PackTCP(dnsm *dnsmessage.Message) (proxy.SolvedMsg, error) 
 		log.Printf("Unable to pack TCP Response: %v \n", err)
 		return nil, errors.New("Unable to pack response, invalid message.")
 	}
+	m = bytes.Trim(m, "\x00")
+	size := len(m)
+
 	var tcpBytes []byte
 	tcpBytes = make([]byte, 2)
 	tcpBytes[0] = 0
 	tcpBytes[1] = byte(len(m))
-	m = append(tcpBytes, m...)
 
-	return m[:len(m)-135], nil
+	m = append(tcpBytes, m...)
+	m[1] = byte(size)
+	return m, nil
 }
 
 func (mp *msgParser) PackUDP(dnsm *dnsmessage.Message) (proxy.SolvedMsg, error) {
@@ -63,6 +68,6 @@ func (mp *msgParser) PackUDP(dnsm *dnsmessage.Message) (proxy.SolvedMsg, error) 
 		log.Printf("Unable to pack TCP Response: %v \n", err)
 		return nil, errors.New("Unable to pack response, invalid message.")
 	}
-
+	m = bytes.Trim(m, "\x00")
 	return m, nil
 }
