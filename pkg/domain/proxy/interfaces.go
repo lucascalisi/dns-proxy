@@ -11,16 +11,18 @@ type UnsolvedMsg = Msg
 type SolvedMsg = Msg
 
 type Resolver interface {
-	Solve(um UnsolvedMsg) (SolvedMsg, error)
+	Solve(um UnsolvedMsg) (Msg, error)
 	GetTLSConnection() (*tls.Conn, error)
 }
 type Cache interface {
-	Get(dnsm *dnsmessage.Message) (SolvedMsg, error)
+	Get(dnsm *dnsmessage.Message) (*dnsmessage.Message, error)
 	Store(dnsm *dnsmessage.Message, sm SolvedMsg) error
 }
 type MsgParser interface {
 	ParseUPDMsg(m Msg) (*dnsmessage.Message, UnsolvedMsg, error)
 	ParseTCPMsg(m Msg) (*dnsmessage.Message, error)
+	PackTCP(dnsm *dnsmessage.Message) (Msg, error)
+	PackUDP(dnsm *dnsmessage.Message) (Msg, error)
 }
 
 const (

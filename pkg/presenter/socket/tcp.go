@@ -1,12 +1,12 @@
 package socket
 
 import (
+	"dns-proxy/pkg/domain/proxy"
 	"errors"
 	"log"
 	"net"
 	"strconv"
 	"sync/atomic"
-	"dns-proxy/pkg/domain/proxy"
 )
 
 func StartTCPServer(proxy proxy.Service, port int, host string, direct bool, maxPoolConnection int) {
@@ -51,7 +51,12 @@ func tcpHandler(conn *net.Conn, p proxy.Service, conns *uint64, direct bool) err
 		if proxyErr != nil {
 			log.Printf("Error solving message: %v \n", proxyErr)
 		}
-		(*conn).Write(solvedMsg)
+
+		response, err := p.PackTCP(solvedMsg)
+		if err != nil {
+			log.Printf(err.Error())
+		}
+		(*conn).Write(response)
 	}
 	atomic.AddUint64(conns, ^uint64(0))
 	return nil
