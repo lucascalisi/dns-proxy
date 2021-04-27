@@ -21,8 +21,7 @@ type Cache interface {
 type MsgParser interface {
 	ParseUPDMsg(m Msg) (*dnsmessage.Message, UnsolvedMsg, error)
 	ParseTCPMsg(m Msg) (*dnsmessage.Message, error)
-	PackTCP(dnsm *dnsmessage.Message) (Msg, error)
-	PackUDP(dnsm *dnsmessage.Message) (Msg, error)
+	PackMessage(dnsm *dnsmessage.Message, msgFormat string) (SolvedMsg, error)
 }
 
 const (

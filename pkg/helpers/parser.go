@@ -43,31 +43,23 @@ func (mp *msgParser) ParseTCPMsg(m proxy.Msg) (*dnsmessage.Message, error) {
 	return &dnsm, nil
 }
 
-func (mp *msgParser) PackTCP(dnsm *dnsmessage.Message) (proxy.SolvedMsg, error) {
+func (mp *msgParser) PackMessage(dnsm *dnsmessage.Message, msgFormat string) (proxy.SolvedMsg, error) {
 	m, err := dnsm.Pack()
 	if err != nil {
-		log.Printf("Unable to pack TCP Response: %v \n", err)
+		log.Printf("Unable to pack %s Response: %v \n", msgFormat, err)
 		return nil, errors.New("Unable to pack response, invalid message.")
 	}
 	m = bytes.Trim(m, "\x00")
 	size := len(m)
 
-	var tcpBytes []byte
-	tcpBytes = make([]byte, 2)
-	tcpBytes[0] = 0
-	tcpBytes[1] = byte(len(m))
+	if msgFormat == "tcp" {
+		var tcpBytes []byte
+		tcpBytes = make([]byte, 2)
+		tcpBytes[0] = 0
+		tcpBytes[1] = byte(len(m))
 
-	m = append(tcpBytes, m...)
-	m[1] = byte(size)
-	return m, nil
-}
-
-func (mp *msgParser) PackUDP(dnsm *dnsmessage.Message) (proxy.SolvedMsg, error) {
-	m, err := dnsm.Pack()
-	if err != nil {
-		log.Printf("Unable to pack TCP Response: %v \n", err)
-		return nil, errors.New("Unable to pack response, invalid message.")
+		m = append(tcpBytes, m...)
+		m[1] = byte(size)
 	}
-	m = bytes.Trim(m, "\x00")
 	return m, nil
 }

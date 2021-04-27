@@ -47,16 +47,13 @@ func tcpHandler(conn *net.Conn, p proxy.Service, conns *uint64, direct bool) err
 			log.Println("Failed to read from connection.")
 			return errors.New("Failed to read from connection.")
 		}
-		solvedMsg, proxyErr := p.Solve(unsolvedMsg[:n], "tcp")
-		if proxyErr != nil {
-			log.Printf("Error solving message: %v \n", proxyErr)
+		solvedMsg, err := p.Solve(unsolvedMsg[:n], "tcp")
+		if err != nil {
+			log.Printf("Error solving message: %v \n", err)
+			return err
 		}
 
-		response, err := p.PackTCP(solvedMsg)
-		if err != nil {
-			log.Printf(err.Error())
-		}
-		(*conn).Write(response)
+		(*conn).Write(solvedMsg)
 	}
 	atomic.AddUint64(conns, ^uint64(0))
 	return nil

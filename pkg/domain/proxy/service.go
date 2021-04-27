@@ -11,10 +11,8 @@ import (
 )
 
 type Service interface {
-	Solve(um UnsolvedMsg, msjFormat string) (*dnsmessage.Message, error)
+	Solve(um UnsolvedMsg, msjFormat string) (SolvedMsg, error)
 	Direct(conn *net.Conn) error
-	PackTCP(dnsm *dnsmessage.Message) (Msg, error)
-	PackUDP(dnsm *dnsmessage.Message) (Msg, error)
 }
 
 type service struct {
@@ -39,7 +37,7 @@ func (s *service) Direct(conn *net.Conn) error {
 	return nil
 }
 
-func (s *service) Solve(um UnsolvedMsg, msgFormat string) (*dnsmessage.Message, error) {
+func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 	// Parse the UnsolvedMsg
 	var parseErr error
 	var dnsm *dnsmessage.Message
@@ -68,32 +66,25 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (*dnsmessage.Message, 
 
 	// If cache could resolve the query, then try with the resolver
 	if cm == nil {
-		sm, resolutionErr := s.resolver.Solve(um)
-		if resolutionErr != nil {
-			log.Printf("Resolution Error: %v \n", resolutionErr)
-			return nil, resolutionErr
+		packed, _ := s.mparser.PackMessage(dnsm, "tcp")
+		sm, err := s.resolver.Solve(packed)
+		if err != nil {
+			log.Printf("Resolution Error: %v \n", err)
+			return nil, err
 		}
 
 		//parse response
 		dnssm, err := s.mparser.ParseTCPMsg(sm)
 		if err != nil {
-			log.Printf("Could not parse solved message Error: %v \n", resolutionErr)
+			log.Printf("Could not parse solved message Error: %v \n", err)
 		}
 
-		cacheErr := s.cache.Store(dnssm, sm)
-		if cacheErr != nil {
-			log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
+		err = s.cache.Store(dnssm, sm)
+		if err != nil {
+			log.Printf("\033[1;33mCache error:\033[0m : %v", err)
 		}
-		return dnssm, nil
+		return s.mparser.PackMessage(dnssm, msgFormat)
 	}
 	log.Printf("\033[1;33mFound in cache\033[0m")
-	return cm, nil
-}
-
-func (s *service) PackTCP(dnsm *dnsmessage.Message) (SolvedMsg, error) {
-	return s.mparser.PackTCP(dnsm)
-}
-
-func (s *service) PackUDP(dnsm *dnsmessage.Message) (SolvedMsg, error) {
-	return s.mparser.PackUDP(dnsm)
+	return s.mparser.PackMessage(cm, msgFormat)
 }

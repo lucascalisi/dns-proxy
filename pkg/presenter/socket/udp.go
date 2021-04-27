@@ -32,11 +32,7 @@ func udpHandler(conn *net.UDPConn, p proxy.Service) {
 			log.Printf("Error solving message: %v \n", proxyErr)
 		}
 
-		response, err := p.PackUDP(solvedMsg)
-		if err != nil {
-			log.Printf(err.Error())
-		}
-		_, err = conn.WriteToUDP(response, addr)
+		_, err = conn.WriteToUDP(solvedMsg, addr)
 		if err != nil {
 			log.Println(err)
 		}
