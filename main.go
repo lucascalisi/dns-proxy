@@ -30,6 +30,7 @@ func main() {
 
 	config := GetConfig()
 	cache := cache.NewMemoryCache(time.Duration(config.CACHE_TLL) * time.Second)
+	go cache.AutoPurge()
 	resolver := resolver.NewDNSOverTlsResolver("1.1.1.1", 853, config.RESOLVER_READ_TO)
 	parser := helpers.NewMsgParser()
 	blocker := blocker.NewAdsBlocker(time.Duration(10) * time.Second)

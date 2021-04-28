@@ -16,7 +16,8 @@ type Resolver interface {
 }
 type Cache interface {
 	Get(dnsm *dnsmessage.Message) (*dnsmessage.Message, error)
-	Store(dnsm *dnsmessage.Message, sm SolvedMsg) error
+	Store(dnsm *dnsmessage.Message) error
+	AutoPurge()
 }
 
 type Blocker interface {

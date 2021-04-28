@@ -69,30 +69,29 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 	if cacheErr != nil {
 		log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
 	}
-
-	// If cache could resolve the query, then try with the resolver
-	if cm == nil {
-		packed, _ := s.mparser.PackMessage(dnsm, "tcp")
-		sm, err := s.resolver.Solve(packed)
-		if err != nil {
-			log.Printf("Resolution Error: %v \n", err)
-			return nil, err
-		}
-
-		//parse response
-		dnssm, err := s.mparser.ParseTCPMsg(sm)
-		if err != nil {
-			log.Printf("Could not parse solved message Error: %v \n", err)
-		}
-
-		err = s.cache.Store(dnssm, sm)
-		if err != nil {
-			log.Printf("\033[1;33mCache error:\033[0m : %v", err)
-		}
-		return s.mparser.PackMessage(dnssm, msgFormat)
+	if cm != nil {
+		cm.Header.ID = dnsm.Header.ID
+		return s.mparser.PackMessage(cm, msgFormat)
 	}
-	log.Printf("\033[1;33mFound in cache\033[0m")
-	return s.mparser.PackMessage(cm, msgFormat)
+
+	packed, _ := s.mparser.PackMessage(dnsm, "tcp")
+	sm, err := s.resolver.Solve(packed)
+	if err != nil {
+		log.Printf("Resolution Error: %v \n", err)
+		return nil, err
+	}
+
+	//parse response
+	dnssm, err := s.mparser.ParseTCPMsg(sm)
+	if err != nil {
+		log.Printf("Could not parse solved message Error: %v \n", err)
+	}
+
+	err = s.cache.Store(dnssm)
+	if err != nil {
+		log.Printf("\033[1;33mCache error:\033[0m : %v", err)
+	}
+	return s.mparser.PackMessage(dnssm, msgFormat)
 }
 
 func removeQuestion(s []dnsmessage.Question, i int) []dnsmessage.Question {
