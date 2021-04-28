@@ -2,37 +2,29 @@ package blocker
 
 import (
 	"dns-proxy/pkg/domain/proxy"
+	"log"
 	"time"
 
 	"golang.org/x/net/dns/dnsmessage"
 )
 
-type Blocker interface {
-	IsBlocked(domain string) bool
-}
-
 type blocker struct {
 	Sources []string
-	Updater Updater
+	List    map[string]bool
+	Updater proxy.ListUpdater
 }
 
-func NewBlocker(refresh time.Duration) proxy.Blocker {
+func NewBlocker(refresh time.Duration, sources []string) proxy.Blocker {
+	updater := NewUpdater(refresh, sources)
 	return &blocker{
-		Sources: []string{},
-		Updater: &updater{refresh},
+		Sources: sources,
+		Updater: updater,
+		List:    make(map[string]bool),
 	}
 }
 
 func (b *blocker) IsBlocked(domain string) bool {
-	var list map[string]bool
-	list = make(map[string]bool)
-	list["lucascontre.site"] = true
-	list["tunnel.us.ngrok.com"] = true
-	list["ngrok.io"] = true
-	list["lanacion.com"] = true
-	list["addons-pa.clients6.google.com"] = true
-
-	return list[domain[:len(domain)-1]]
+	return b.List[domain[:len(domain)-1]]
 }
 
 func (b *blocker) MockBlockedQuery(dnsm *dnsmessage.Message) *dnsmessage.Message {
@@ -41,4 +33,14 @@ func (b *blocker) MockBlockedQuery(dnsm *dnsmessage.Message) *dnsmessage.Message
 	dnsm.Header.RCode = dnsmessage.RCodeRefused
 	dnsm.Additionals = []dnsmessage.Resource{}
 	return dnsm
+}
+
+func (b *blocker) Update() {
+	for _ = range time.Tick(time.Second) {
+		list := b.Updater.UpdateAll()
+		if list != nil {
+			b.List = list
+			log.Printf("Block List [\033[1;33mUpdated\033[0m] -> : %d", len(b.List))
+		}
+	}
 }

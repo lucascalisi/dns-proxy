@@ -63,6 +63,7 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 			return s.mparser.PackMessage(s.blocker.MockBlockedQuery(dnsm), msgFormat)
 		}
 	}
+
 	// Check if the response is cached
 	cm, cacheErr := s.cache.Get(dnsm)
 	if cacheErr != nil {
