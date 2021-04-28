@@ -18,6 +18,10 @@ type Cache interface {
 	Get(dnsm *dnsmessage.Message) (*dnsmessage.Message, error)
 	Store(dnsm *dnsmessage.Message, sm SolvedMsg) error
 }
+
+type Blocker interface {
+	IsBlocked(domain string) bool
+}
 type MsgParser interface {
 	ParseUPDMsg(m Msg) (*dnsmessage.Message, UnsolvedMsg, error)
 	ParseTCPMsg(m Msg) (*dnsmessage.Message, error)

@@ -19,10 +19,11 @@ type service struct {
 	resolver Resolver
 	mparser  MsgParser
 	cache    Cache
+	blocker  Blocker
 }
 
-func NewDNSProxy(r Resolver, mp MsgParser, c Cache) Service {
-	return &service{r, mp, c}
+func NewDNSProxy(r Resolver, mp MsgParser, c Cache, b Blocker) Service {
+	return &service{r, mp, c, b}
 }
 
 func (s *service) Direct(conn *net.Conn) error {
@@ -53,11 +54,17 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 		return nil, parseErr
 	}
 
+	// Block
 	// Log
-	for _, q := range dnsm.Questions {
+	log.Println(dnsm.Questions)
+	for i, q := range dnsm.Questions {
 		log.Printf("DNS  [\033[1;36m%s\033[0m] -> : \033[1;34m%s\033[0m", msgFormat, q.Name.String())
+		if s.blocker.IsBlocked(q.Name.String()) {
+			log.Printf("Domain [\033[1;33mBlocked\033[0m] -> : %s", q.Name.String())
+			return s.mparser.PackMessage(dnsm, msgFormat)
+			removeQuestion(dnsm.Questions, i)
+		}
 	}
-
 	// Check if the response is cached
 	cm, cacheErr := s.cache.Get(dnsm)
 	if cacheErr != nil {
@@ -87,4 +94,8 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 	}
 	log.Printf("\033[1;33mFound in cache\033[0m")
 	return s.mparser.PackMessage(cm, msgFormat)
+}
+
+func removeQuestion(s []dnsmessage.Question, i int) []dnsmessage.Question {
+	return append(s[:i], s[i+1:]...)
 }
