@@ -56,12 +56,11 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 
 	// Block
 	// Log
-	for i, q := range dnsm.Questions {
+	for _, q := range dnsm.Questions {
 		log.Printf("DNS  [\033[1;36m%s\033[0m] -> : \033[1;34m%s\033[0m", msgFormat, q.Name.String())
 		if s.blocker.IsBlocked(q.Name.String()) {
 			log.Printf("Domain [\033[1;33mBlocked\033[0m] -> : %s", q.Name.String())
-			return s.mparser.PackMessage(dnsm, msgFormat)
-			removeQuestion(dnsm.Questions, i)
+			return s.mparser.PackMessage(s.blocker.MockBlockedQuery(dnsm), msgFormat)
 		}
 	}
 	// Check if the response is cached
@@ -91,9 +90,6 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 	if err != nil {
 		log.Printf("\033[1;33mCache error:\033[0m : %v", err)
 	}
-	return s.mparser.PackMessage(dnssm, msgFormat)
-}
 
-func removeQuestion(s []dnsmessage.Question, i int) []dnsmessage.Question {
-	return append(s[:i], s[i+1:]...)
+	return s.mparser.PackMessage(dnssm, msgFormat)
 }

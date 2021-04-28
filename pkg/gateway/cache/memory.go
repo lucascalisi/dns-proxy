@@ -34,7 +34,6 @@ func (mc *memCache) AutoPurge() {
 	for now := range time.Tick(time.Second) {
 		for key, cValue := range mc.entries {
 			if cValue.expiration.Before(now) {
-				log.Println(cValue.msg.Questions[0].Name.String())
 				mc.mx.Lock()
 				log.Printf("Clearing entry: %v \n", key)
 				delete(mc.entries, key)

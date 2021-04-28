@@ -33,7 +33,7 @@ func main() {
 	go cache.AutoPurge()
 	resolver := resolver.NewDNSOverTlsResolver("1.1.1.1", 853, config.RESOLVER_READ_TO)
 	parser := helpers.NewMsgParser()
-	blocker := blocker.NewAdsBlocker(time.Duration(10) * time.Second)
+	blocker := blocker.NewBlocker(time.Duration(10) * time.Second)
 
 	proxy := proxy.NewDNSProxy(resolver, parser, cache, blocker)
 	go socket.StarUDPtServer(proxy, config.UDP_PORT, "0.0.0.0")

@@ -22,6 +22,7 @@ type Cache interface {
 
 type Blocker interface {
 	IsBlocked(domain string) bool
+	MockBlockedQuery(dnsm *dnsmessage.Message) *dnsmessage.Message
 }
 type MsgParser interface {
 	ParseUPDMsg(m Msg) (*dnsmessage.Message, UnsolvedMsg, error)
