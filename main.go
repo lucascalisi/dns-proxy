@@ -2,6 +2,7 @@ package main
 
 import (
 	"dns-proxy/pkg/domain/proxy"
+	"dns-proxy/pkg/gateway/blocker"
 	"dns-proxy/pkg/gateway/cache"
 	"dns-proxy/pkg/gateway/resolver"
 	"dns-proxy/pkg/helpers"
@@ -29,10 +30,12 @@ func main() {
 
 	config := GetConfig()
 	cache := cache.NewMemoryCache(time.Duration(config.CACHE_TLL) * time.Second)
-	resolver := resolver.NewCloudFlareResolver("1.1.1.1", 853, config.RESOLVER_READ_TO)
+	go cache.AutoPurge()
+	resolver := resolver.NewDNSOverTlsResolver("1.1.1.1", 853, config.RESOLVER_READ_TO)
 	parser := helpers.NewMsgParser()
+	blocker := blocker.NewBlocker(time.Duration(10) * time.Second)
 
-	proxy := proxy.NewDNSProxy(resolver, parser, cache)
+	proxy := proxy.NewDNSProxy(resolver, parser, cache, blocker)
 	go socket.StarUDPtServer(proxy, config.UDP_PORT, "0.0.0.0")
 	socket.StartTCPServer(proxy, config.TCP_PORT, "0.0.0.0", config.TCP_DIRECT, config.TCP_MAX_CONN_POOL)
 

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const cflRootCert = `-----BEGIN CERTIFICATE-----
+const CA = `-----BEGIN CERTIFICATE-----
 MIIEQzCCAyugAwIBAgIQCidf5wTW7ssj1c1bSxpOBDANBgkqhkiG9w0BAQwFADBh
 MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
 d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD
@@ -68,37 +68,37 @@ CzqJx1+NLyc8nAK8Ib2HxnC+IrrWzfRLvVNve8KaN9EtBH7TuMwNW4SpDCmGr6fY
 -PQyEQNywp8ocEycVHjf5RsOu2f35uSOLfyo=
  -----END CERTIFICATE-----`
 
-type cloudFlare struct {
+type dot struct {
 	ip          string
 	port        int
 	rootCert    string
 	readTimeOut uint
 }
 
-func NewCloudFlareResolver(ip string, port int, rto uint) proxy.Resolver {
-	return &cloudFlare{ip, port, cflRootCert, rto}
+func NewDNSOverTlsResolver(ip string, port int, rto uint) proxy.Resolver {
+	return &dot{ip, port, CA, rto}
 }
 
-func (cfl *cloudFlare) GetTLSConnection() (*tls.Conn, error) {
+func (dot *dot) GetTLSConnection() (*tls.Conn, error) {
 	roots := x509.NewCertPool()
-	if !roots.AppendCertsFromPEM([]byte(cfl.rootCert)) {
+	if !roots.AppendCertsFromPEM([]byte(dot.rootCert)) {
 		log.Println("Fail to parse rootCert")
 		return nil, errors.New("Fail to parse rootCert")
 	}
-	dnsCloudFlareConn, err := tls.Dial("tcp", cfl.ip+":"+strconv.Itoa(cfl.port), &tls.Config{
+	dnsTLSConn, err := tls.Dial("tcp", dot.ip+":"+strconv.Itoa(dot.port), &tls.Config{
 		RootCAs: roots,
 	})
 	if err != nil {
 		log.Println("Error connecting to CloudFlare")
 		return nil, err
 	}
-	_ = dnsCloudFlareConn.SetReadDeadline(time.Now().Add(time.Duration(cfl.readTimeOut) * time.Millisecond))
-	return dnsCloudFlareConn, nil
+	_ = dnsTLSConn.SetReadDeadline(time.Now().Add(time.Duration(dot.readTimeOut) * time.Millisecond))
+	return dnsTLSConn, nil
 }
 
-func (cfl *cloudFlare) Solve(um proxy.UnsolvedMsg) (proxy.SolvedMsg, error) {
+func (dot *dot) Solve(um proxy.UnsolvedMsg) (proxy.SolvedMsg, error) {
 	// Levanto una conexión con CF
-	conn, err := cfl.GetTLSConnection()
+	conn, err := dot.GetTLSConnection()
 	if err != nil {
 		return nil, err
 	}

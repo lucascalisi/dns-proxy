@@ -16,7 +16,13 @@ type Resolver interface {
 }
 type Cache interface {
 	Get(dnsm *dnsmessage.Message) (*dnsmessage.Message, error)
-	Store(dnsm *dnsmessage.Message, sm SolvedMsg) error
+	Store(dnsm *dnsmessage.Message) error
+	AutoPurge()
+}
+
+type Blocker interface {
+	IsBlocked(domain string) bool
+	MockBlockedQuery(dnsm *dnsmessage.Message) *dnsmessage.Message
 }
 type MsgParser interface {
 	ParseUPDMsg(m Msg) (*dnsmessage.Message, UnsolvedMsg, error)

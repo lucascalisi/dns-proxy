@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"dns-proxy/pkg/domain/proxy"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -11,49 +12,57 @@ import (
 )
 
 type memCache struct {
-	mutex   sync.Mutex
 	ttl     time.Duration
-	entries map[string]cachedEntry
+	mx      sync.RWMutex
+	entries map[string]cacheValue
 }
 
-type cachedEntry struct {
-	present bool
-	msg     *dnsmessage.Message
-	time    time.Time
+type cacheValue struct {
+	msg        *dnsmessage.Message
+	expiration time.Time
 }
 
 func NewMemoryCache(ttl time.Duration) proxy.Cache {
-	return &memCache{ttl: ttl, entries: map[string]cachedEntry{}}
+	c := memCache{
+		ttl:     ttl,
+		entries: map[string]cacheValue{},
+	}
+	return &c
+}
+
+func (mc *memCache) AutoPurge() {
+	for now := range time.Tick(time.Second) {
+		for key, cValue := range mc.entries {
+			if cValue.expiration.Before(now) {
+				mc.mx.Lock()
+				log.Printf("Clearing entry: %v \n", key)
+				delete(mc.entries, key)
+				mc.mx.Unlock()
+			}
+		}
+	}
 }
 
 func (mc *memCache) Get(dnsm *dnsmessage.Message) (*dnsmessage.Message, error) {
-	mc.mutex.Lock()
-	defer mc.mutex.Unlock()
-
-	result := mc.entries[AsSha256(dnsm.Questions)]
-	if result.present && time.Now().Sub(result.time) < mc.ttl {
-		result.msg.Header.ID = dnsm.Header.ID
-		dnsm.Header = result.msg.Header
-		dnsm.Answers = result.msg.Answers
-		dnsm.Authorities = result.msg.Authorities
-		dnsm.Additionals = result.msg.Additionals
-
-		return dnsm, nil
+	mc.mx.RLock()
+	defer mc.mx.RUnlock()
+	if cValue, ok := mc.entries[mc.hashKey(dnsm.Questions)]; ok {
+		return cValue.msg, nil
 	}
-
 	return nil, nil
 }
 
-func (mc *memCache) Store(dnsm *dnsmessage.Message, sm proxy.SolvedMsg) error {
-	mc.mutex.Lock()
-	defer mc.mutex.Unlock()
-	mc.entries[AsSha256(dnsm.Questions)] = cachedEntry{true, dnsm, time.Now()}
+func (mc *memCache) Store(dnsm *dnsmessage.Message) error {
+	mc.mx.Lock()
+	mc.entries[mc.hashKey(dnsm.Questions)] = cacheValue{dnsm, time.Now().Add(mc.ttl)}
+	mc.mx.Unlock()
 	return nil
 }
 
-func AsSha256(o interface{}) string {
-	h := sha256.New()
-	h.Write([]byte(fmt.Sprintf("%v", o)))
+func (mc *memCache) hashKey(questions []dnsmessage.Question) string {
 
+	h := sha256.New()
+	h.Write([]byte(fmt.Sprintf("%v", questions)))
 	return fmt.Sprintf("%x", h.Sum(nil))
+
 }
