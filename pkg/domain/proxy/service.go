@@ -56,7 +56,6 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 
 	// Block
 	// Log
-	log.Println(dnsm.Questions)
 	for i, q := range dnsm.Questions {
 		log.Printf("DNS  [\033[1;36m%s\033[0m] -> : \033[1;34m%s\033[0m", msgFormat, q.Name.String())
 		if s.blocker.IsBlocked(q.Name.String()) {

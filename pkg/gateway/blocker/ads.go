@@ -28,6 +28,7 @@ func (b *adsBlocker) IsBlocked(domain string) bool {
 	list["tunnel.us.ngrok.com"] = true
 	list["ngrok.io"] = true
 	list["lanacion.com"] = true
+	list["addons-pa.clients6.google.com"] = true
 
 	return list[domain[:len(domain)-1]]
 }
