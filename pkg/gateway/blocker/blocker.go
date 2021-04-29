@@ -37,10 +37,11 @@ func (b *blocker) MockBlockedQuery(dnsm *dnsmessage.Message) *dnsmessage.Message
 
 func (b *blocker) Update() {
 	for _ = range time.Tick(time.Second) {
-		list := b.Updater.UpdateAll()
+		list, errors := b.Updater.UpdateAll()
 		if list != nil {
 			b.List = list
 			log.Printf("Block List [\033[1;33mUpdated\033[0m] -> : %d", len(b.List))
+			log.Printf("Block List [\033[1;33mErrors\033[0m] -> : %d", errors)
 		}
 	}
 }

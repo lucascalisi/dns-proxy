@@ -22,7 +22,7 @@ type Cache interface {
 
 type ListUpdater interface {
 	Update(source string) error
-	UpdateAll() map[string]bool
+	UpdateAll() (map[string]bool, int)
 }
 type Blocker interface {
 	IsBlocked(domain string) bool
