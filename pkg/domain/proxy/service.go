@@ -16,14 +16,15 @@ type Service interface {
 }
 
 type service struct {
-	resolver Resolver
-	mparser  MsgParser
-	cache    Cache
-	blocker  Blocker
+	resolver   Resolver
+	mparser    MsgParser
+	cache      Cache
+	blocker    Blocker
+	repository Repository
 }
 
-func NewDNSProxy(r Resolver, mp MsgParser, c Cache, b Blocker) Service {
-	return &service{r, mp, c, b}
+func NewDNSProxy(r Resolver, mp MsgParser, c Cache, b Blocker, rep Repository) Service {
+	return &service{r, mp, c, b, rep}
 }
 
 func (s *service) Direct(conn *net.Conn) error {
@@ -60,6 +61,7 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 		log.Printf("DNS  [\033[1;36m%s\033[0m] -> : \033[1;34m%s\033[0m", msgFormat, q.Name.String())
 		if s.blocker.IsBlocked(q.Name.String()) {
 			log.Printf("Domain [\033[1;33mBlocked\033[0m] -> : %s", q.Name.String())
+			s.repository.SaveQuery(dnsm, "blocked")
 			return s.mparser.PackMessage(s.blocker.MockBlockedQuery(dnsm), msgFormat)
 		}
 	}
@@ -71,6 +73,7 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 	}
 	if cm != nil {
 		cm.Header.ID = dnsm.Header.ID
+		s.repository.SaveQuery(cm, "cached")
 		return s.mparser.PackMessage(cm, msgFormat)
 	}
 
@@ -92,5 +95,6 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 		log.Printf("\033[1;33mCache error:\033[0m : %v", err)
 	}
 
+	s.repository.SaveQuery(dnssm, "solved")
 	return s.mparser.PackMessage(dnssm, msgFormat)
 }

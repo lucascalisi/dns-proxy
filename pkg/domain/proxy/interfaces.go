@@ -35,6 +35,10 @@ type MsgParser interface {
 	PackMessage(dnsm *dnsmessage.Message, msgFormat string) (SolvedMsg, error)
 }
 
+type Repository interface {
+	SaveQuery(*dnsmessage.Message, string) error
+}
+
 const (
 	InfoColor    = "\033[1;34m%s\033[0m"
 	NoticeColor  = "\033[1;36m%s\033[0m"

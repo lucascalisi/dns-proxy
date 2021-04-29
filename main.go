@@ -5,6 +5,7 @@ import (
 	"dns-proxy/pkg/domain/proxy"
 	"dns-proxy/pkg/gateway/blocker"
 	"dns-proxy/pkg/gateway/cache"
+	"dns-proxy/pkg/gateway/repository"
 	"dns-proxy/pkg/gateway/resolver"
 	"dns-proxy/pkg/helpers"
 	"dns-proxy/pkg/presenter/socket"
@@ -38,9 +39,13 @@ func main() {
 	var sources []string
 	sources, _ = source("/Users/lcalisi/dns-proxy/blocker/lists.list")
 	blocker := blocker.NewBlocker(time.Duration(10)*time.Minute, sources)
+	repository, err := repository.NewRepository("./dns-proxy.db")
+	if err != nil {
+		log.Fatalf("could not open sqlite database: %v", err)
+	}
 	go blocker.Update()
 
-	proxy := proxy.NewDNSProxy(resolver, parser, cache, blocker)
+	proxy := proxy.NewDNSProxy(resolver, parser, cache, blocker, repository)
 	go socket.StarUDPtServer(proxy, config.UDP_PORT, "0.0.0.0")
 	socket.StartTCPServer(proxy, config.TCP_PORT, "0.0.0.0", config.TCP_DIRECT, config.TCP_MAX_CONN_POOL)
 
