@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"dns-proxy/pkg/domain/proxy"
 	"dns-proxy/pkg/gateway/blocker"
 	"dns-proxy/pkg/gateway/cache"
@@ -33,7 +34,11 @@ func main() {
 	go cache.AutoPurge()
 	resolver := resolver.NewDNSOverTlsResolver("1.1.1.1", 853, config.RESOLVER_READ_TO)
 	parser := helpers.NewMsgParser()
-	blocker := blocker.NewBlocker(time.Duration(10) * time.Second)
+
+	var sources []string
+	sources, _ = source("/Users/lcalisi/dns-proxy/blocker/lists.list")
+	blocker := blocker.NewBlocker(time.Duration(10)*time.Minute, sources)
+	go blocker.Update()
 
 	proxy := proxy.NewDNSProxy(resolver, parser, cache, blocker)
 	go socket.StarUDPtServer(proxy, config.UDP_PORT, "0.0.0.0")
@@ -65,4 +70,23 @@ func isNotRunningInDockerContainer() bool {
 	}
 
 	return true
+}
+
+func source(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatalf("failed to open source list")
+	}
+
+	scanner := bufio.NewScanner(file)
+	var sources []string
+
+	for scanner.Scan() {
+		if scanner.Text()[:1] != "#" {
+			sources = append(sources, scanner.Text())
+		}
+	}
+
+	return sources, nil
+
 }

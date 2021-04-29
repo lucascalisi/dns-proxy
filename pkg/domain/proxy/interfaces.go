@@ -20,9 +20,14 @@ type Cache interface {
 	AutoPurge()
 }
 
+type ListUpdater interface {
+	Update(source string) error
+	UpdateAll() (map[string]bool, int)
+}
 type Blocker interface {
 	IsBlocked(domain string) bool
 	MockBlockedQuery(dnsm *dnsmessage.Message) *dnsmessage.Message
+	Update()
 }
 type MsgParser interface {
 	ParseUPDMsg(m Msg) (*dnsmessage.Message, UnsolvedMsg, error)
