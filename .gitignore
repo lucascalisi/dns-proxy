@@ -1,2 +1,3 @@
 .env
 dns-proxy
+sql/dnsproxy.db
