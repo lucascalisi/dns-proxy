@@ -39,7 +39,7 @@ func main() {
 	var sources []string
 	sources, _ = source("/Users/lcalisi/dns-proxy/blocker/lists.list")
 	blocker := blocker.NewBlocker(time.Duration(10)*time.Minute, sources)
-	repository, err := repository.NewRepository("./dns-proxy.db")
+	repository, err := repository.NewRepository("/Users/lcalisi/dns-proxy/db/dnsproxy.db")
 	if err != nil {
 		log.Fatalf("could not open sqlite database: %v", err)
 	}

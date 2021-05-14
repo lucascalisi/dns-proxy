@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  monitor:
+    ports:
+      - 3000:3000
+    image: grafana/grafana:latest-ubuntu
+    volumes:
+      - type: bind
+        source: ./db/grafana/data
+        target: /var/lib/grafana/data
+      - type: bind
+        source: ./db/grafana/provisioning
+        target: /etc/grafana/provisioning
+      - ./db/dnsproxy.db:/db/dnsproxy.db
+    environment:
+      - GF_INSTALL_PLUGINS=frser-sqlite-datasource

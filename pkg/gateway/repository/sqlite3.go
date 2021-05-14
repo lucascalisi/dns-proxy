@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"dns-proxy/pkg/domain/proxy"
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -28,17 +27,13 @@ func (r *repository) SaveQuery(dnsm *dnsmessage.Message, action string) error {
 		domain := q.Name.String()
 		queryType := q.Type.String()
 		class := q.Class.String()
-		statement, err := r.db.Prepare("INSERT INTO resolved(domain, type, class, action, date) values(?,?,?)")
+		statement, err := r.db.Prepare("INSERT INTO resolved(domain, type, class, action, date) values(?,?,?,?,?)")
 		if err != nil {
-			log.Println("ERROR")
-			log.Println(err)
 			return fmt.Errorf("could not prepare statement: %v", err)
 		}
 
 		_, err = statement.Exec(domain, queryType, class, action, time.Now())
 		if err != nil {
-			log.Println("ERROR")
-			log.Println(err)
 			return fmt.Errorf("could not insert register: %v", err)
 		}
 	}
